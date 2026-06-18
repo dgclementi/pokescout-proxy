@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PokéScout London</title>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0f1729; color: #e2e8f0; min-height: 100vh; }
+    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #1e2d47; }
+    ::-webkit-scrollbar-thumb { background: #FFCC00; border-radius: 3px; }
+    button { transition: all 0.15s; cursor: pointer; }
+    a { text-decoration: none; }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+
+const PROXY = "https://pokescout-proxy-production.up.railway.app";
+
+const STORES = [
+  { id: "bestbuy-masonville",    name: "Best Buy",          branch: "Masonville",       address: "1680 Richmond St N",   storeId: "977",  type: "bestbuy",         color: "#0046BE", logo: "🔵" },
+  { id: "bestbuy-oxford",        name: "Best Buy",          branch: "Oxford/Wellington", address: "1105 Wellington Rd",   storeId: "814",  type: "bestbuy",         color: "#0046BE", logo: "🔵" },
+  { id: "walmart-exeter",        name: "Walmart",           branch: "Exeter Rd",         address: "1001 Exeter Rd",       lat: 42.9482, lon: -81.2234, type: "walmart", color: "#0071CE", logo: "🟡" },
+  { id: "walmart-masonville",    name: "Walmart",           branch: "Masonville",        address: "1750 Richmond St",     lat: 43.0164, lon: -81.2636, type: "walmart", color: "#0071CE", logo: "🟡" },
+  { id: "walmart-trafalgar",     name: "Walmart",           branch: "Trafalgar",         address: "3030 Wonderland Rd S", lat: 42.9366, lon: -81.3074, type: "walmart", color: "#0071CE", logo: "🟡" },
+  { id: "costco-london",         name: "Costco",            branch: "London",            address: "1375 Wharncliffe Rd S",                 type: "costco",          color: "#E31837", logo: "🔴" },
+  { id: "ebgames-masonville",    name: "EB Games",          branch: "Masonville Place",  address: "1680 Richmond St N",                   type: "ebgames",         color: "#FF6B00", logo: "🟠" },
+  { id: "ebgames-oxford",        name: "EB Games",          branch: "Oxford Place",      address: "1105 Wellington Rd",                   type: "ebgames",         color: "#FF6B00", logo: "🟠" },
+  { id: "canadacomputers-london",name: "Canada Computers",  branch: "London",            address: "735 Wonderland Rd N",                  type: "canadacomputers", color: "#CC0000", logo: "🖥️" },
+  { id: "showcase-masonville",   name: "Showcase",          branch: "Masonville Place",  address: "1680 Richmond St N",                   type: "showcase",        color: "#7B2D8B", logo: "🟣" },
+];
+
+const PRODUCTS = [
+  { id: "etb-sv",          name: "Scarlet & Violet ETB",  sku: "17645195", upc: "0820650851155", category: "ETB",     msrp: 64.99, storePrices: { bestbuy: 64.99, walmart: 59.97, costco: 54.99, ebgames: 64.99, canadacomputers: 62.99, showcase: 67.99 } },
+  { id: "etb-paldea",      name: "Paldea Evolved ETB",    sku: "17271486", upc: "0820650851063", category: "ETB",     msrp: 64.99, storePrices: { bestbuy: 64.99, walmart: 59.97, costco: 54.99, ebgames: 64.99, canadacomputers: 62.99, showcase: 67.99 } },
+  { id: "booster-sv",      name: "SV Booster Pack",       sku: "17645196", upc: "0820650850714", category: "Booster", msrp: 5.99,  storePrices: { bestbuy: 5.99,  walmart: 5.47,  ebgames: 5.99,  canadacomputers: 5.99,  showcase: 6.49  } },
+  { id: "151-etb",         name: "Pokémon 151 ETB",       sku: "17645197", upc: "0820650851162", category: "ETB",     msrp: 64.99, storePrices: { bestbuy: 64.99, walmart: 59.97, costco: 54.99, ebgames: 64.99, canadacomputers: 63.99, showcase: 69.99 } },
+  { id: "tin-2024",        name: "Collector Chest Tin",   sku: "17645198", upc: "0820650851179", category: "Tin",     msrp: 34.99, storePrices: { bestbuy: 34.99, walmart: 32.97, ebgames: 34.99, canadacomputers: 33.99, showcase: 36.99 } },
+  { id: "bundle-sv",       name: "SV Booster Bundle",     sku: "17645199", upc: "0820650851186", category: "Bundle",  msrp: 29.99, storePrices: { bestbuy: 29.99, walmart: 27.97, costco: 24.99, ebgames: 29.99, canadacomputers: 28.99, showcase: 31.99 } },
+  { id: "paradox-rift",    name: "Paradox Rift ETB",      sku: "17645200", upc: "0820650851193", category: "ETB",     msrp: 64.99, storePrices: { bestbuy: 64.99, walmart: 59.97, costco: 54.99, ebgames: 64.99, canadacomputers: 62.99, showcase: 67.99 } },
+  { id: "temporal-forces", name: "Temporal Forces ETB",   sku: "17645201", upc: "0820650851200", category: "ETB",     msrp: 64.99, storePrices: { bestbuy: 64.99, walmart: 59.97, costco: 54.99, ebgames: 64.99, canadacomputers: 63.99, showcase: 69.99 } },
+];
+
+function fmt(p) { return p != null ? `$${p.toFixed(2)}` : "—"; }
+function getPrice(product, type) { return product.storePrices?.[type] ?? null; }
+function getBest(pid) {
+  const p = PRODUCTS.find(x => x.id === pid);
+  if (!p) return null;
+  const vals = Object.values(p.storePrices).filter(v => v != null);
+  return vals.length ? Math.min(...vals) : null;
+}
+function mockStatus(sid, pid) {
+  const seed = (sid+pid).split("").reduce((a,c)=>a+c.charCodeAt(0),0);
+  const r = ((seed*9301+49297)%233280)/233280;
+  if (r<0.3) return {status:"IN_STOCK",qty:Math.floor(r*20)+1};
+  if (r<0.5) return {status:"LOW_STOCK",qty:Math.floor(r*3)+1};
+  if (r<0.7) return {status:"OUT_OF_STOCK",qty:0};
+  return {status:"UNKNOWN",qty:null};
+}
+function timeAgo(u) {
+  const d = Math.floor(Date.now()/1000)-u;
+  if(d<60) return `${d}s ago`;
+  if(d<3600) return `${Math.floor(d/60)}m ago`;
+  if(d<86400) return `${Math.floor(d/3600)}h ago`;
+  return `${Math.floor(d/86400)}d ago`;
+}
+
+async function apiBestBuy(sku, storeId) {
+  try {
+    const r = await fetch(`${PROXY}/api/bestbuy/${sku}?storeId=${storeId}`);
+    if (!r.ok) throw new Error();
+    return await r.json();
+  } catch { return { error: true }; }
+}
+async function apiWalmart(upc, lat, lon) {
+  try {
+    const r = await fetch(`${PROXY}/api/walmart/${upc}?lat=${lat}&lon=${lon}`);
+    if (!r.ok) throw new Error();
+    const d = await r.json();
+    return d.stores;
+  } catch { return [{ error: true }]; }
+}
+
+const BADGE_CFG = {
+  IN_STOCK:     { bg:"#d1fae5", text:"#065f46", label:"In Stock",     dot:"#10b981" },
+  LOW_STOCK:    { bg:"#fef3c7", text:"#92400e", label:"Low Stock",    dot:"#f59e0b" },
+  OUT_OF_STOCK: { bg:"#fee2e2", text:"#991b1b", label:"Out of Stock", dot:"#ef4444" },
+  UNKNOWN:      { bg:"#f3f4f6", text:"#6b7280", label:"Unknown",      dot:"#9ca3af" },
+  LOADING:      { bg:"#ede9fe", text:"#5b21b6", label:"Checking…",    dot:"#8b5cf6" },
+};
+function StatusBadge({status, qty}) {
+  const c = BADGE_CFG[status] || { bg:"#f3f4f6", text:"#6b7280", label:status, dot:"#9ca3af" };
+  return <span style={{display:"inline-flex",alignItems:"center",gap:5,background:c.bg,color:c.text,borderRadius:9999,padding:"3px 10px",fontSize:12,fontWeight:600}}>
+    <span style={{width:7,height:7,borderRadius:"50%",background:c.dot,display:"inline-block"}}/>
+    {c.label}{qty!=null&&qty>0&&status!=="OUT_OF_STOCK"?` (${qty})`:""}</span>;
+}
+function Spinner() { return <span style={{display:"inline-block",animation:"spin 1s linear infinite",fontSize:16}}>⚙</span>; }
+
+// Reddit
+const REDDIT_SOURCES = [
+  {sub:"PokemonTCGCanada",label:"r/PokemonTCGCanada",weight:3},
+  {sub:"pokemontcg",label:"r/pokemontcg",weight:1},
+  {sub:"londonontario",label:"r/londonontario",weight:2},
+];
+const RK = ["restock","in stock","just found","picked up","spotted","available","sighting"];
+const LK = ["london","london on","london ontario","519"];
+const SK = ["walmart","best buy","costco","eb games","canada computers"];
+const PK = ["pokemon","pokémon","tcg","etb","elite trainer","booster","scarlet","violet"];
+
+function scorePost(post) {
+  const t = (post.title+" "+(post.selftext||"")).toLowerCase();
+  if (!PK.some(k=>t.includes(k))) return null;
+  let score=0,type="general",isLocal=false;
+  LK.forEach(k=>{if(t.includes(k)){score+=3;isLocal=true;}});
+  SK.forEach(k=>{if(t.includes(k))score+=2;});
+  RK.forEach(k=>{if(t.includes(k)){score+=2;type="restock";}});
+  return {score,type,isLocal};
+}
+
+async function fetchReddit(sub) {
+  const posts=[];
+  for (const url of [`https://www.reddit.com/r/${sub}/new.json?limit=25`,`https://www.reddit.com/r/${sub}/search.json?q=pokemon+tcg&sort=new&limit=15&restrict_sr=1`]) {
+    try {
+      const r=await fetch(url,{headers:{"User-Agent":"PokéScout/1.0"}});
+      if(!r.ok) continue;
+      const d=await r.json();
+      (d?.data?.children??[]).forEach(({data:p})=>{
+        if(!posts.find(x=>x.id===p.id))
+          posts.push({id:p.id,title:p.title,selftext:p.selftext,url:`https://reddit.com${p.permalink}`,score:p.score,created_utc:p.created_utc,subreddit:p.subreddit,flair:p.link_flair_text});
+      });
+    } catch {}
+  }
+  return posts;
+}
+
+function App() {
+  const [inv, setInv] = React.useState({});
+  const [loading, setLoading] = React.useState(false);
+  const [lastChecked, setLastChecked] = React.useState(null);
+  const [alerts, setAlerts] = React.useState([]);
+  const [tab, setTab] = React.useState("inventory");
+  const [filterCat, setFilterCat] = React.useState("All");
+  const [filterStore, setFilterStore] = React.useState("All");
+  const [posts, setPosts] = React.useState([]);
+  const [redditLoading, setRedditLoading] = React.useState(false);
+  const [redditFilter, setRedditFilter] = React.useState("all");
+  const prevInv = React.useRef({});
+
+  const cats = ["All",...new Set(PRODUCTS.map(p=>p.category))];
+  const storeNames = ["All",...new Set(STORES.map(s=>s.name))];
+
+  const scan = React.useCallback(async () => {
+    setLoading(true);
+    const newInv = {};
+    STORES.forEach(s=>PRODUCTS.forEach(p=>{ newInv[`${s.id}_${p.id}`]={status:"LOADING"}; }));
+    setInv({...newInv});
+    const newAlerts=[];
+    for (const store of STORES) {
+      for (const product of PRODUCTS) {
+        const key=`${store.id}_${product.id}`;
+        let result;
+        const basePrice = getPrice(product, store.type);
+        try {
+          if (store.type==="bestbuy") {
+            const raw=await apiBestBuy(product.sku, store.storeId);
+            if(raw.error) throw new Error();
+            result={status:raw.inStock?"IN_STOCK":"OUT_OF_STOCK",qty:raw.quantity,price:raw.price??basePrice,source:"live"};
+          } else if (store.type==="walmart") {
+            const raw=await apiWalmart(product.upc,store.lat,store.lon);
+            if(raw[0]?.error) throw new Error();
+            result={status:raw[0]?.inStock?"IN_STOCK":"OUT_OF_STOCK",qty:raw[0]?.quantity,price:raw[0]?.price??basePrice,source:"live"};
+          } else throw new Error();
+        } catch {
+          const m=mockStatus(store.id,product.id);
+          result={status:m.status,qty:m.qty,price:basePrice,isMock:true};
+        }
+        result.lastChecked=new Date().toLocaleTimeString();
+        const prev=prevInv.current[key];
+        if(prev&&prev.status==="OUT_OF_STOCK"&&["IN_STOCK","LOW_STOCK"].includes(result.status))
+          newAlerts.push({id:Date.now()+Math.random(),store:`${store.name} ${store.branch}`,product:product.name,status:result.status,price:result.price,time:result.lastChecked});
+        newInv[key]=result;
+        prevInv.current[key]=result;
+      }
+    }
+    setInv({...newInv});
+    setAlerts(a=>[...newAlerts,...a].slice(0,50));
+    setLastChecked(new Date().toLocaleTimeString());
+    setLoading(false);
+  }, []);
+
+  const fetchPosts = React.useCallback(async () => {
+    setRedditLoading(true);
+    const all=[];
+    for (const src of REDDIT_SOURCES) {
+      const ps=await fetchReddit(src.sub);
+      ps.forEach(p=>{
+        const a=scorePost(p);
+        if(!a) return;
+        all.push({...p,...a,totalScore:a.score*src.weight});
+      });
+    }
+    all.sort((a,b)=>{
+      if(a.isLocal&&!b.isLocal) return -1;
+      if(!a.isLocal&&b.isLocal) return 1;
+      return b.totalScore-a.totalScore;
+    });
+    setPosts(all);
+    setRedditLoading(false);
+  }, []);
+
+  const inStockCount = Object.values(inv).filter(v=>v?.status==="IN_STOCK").length;
+  const lowCount = Object.values(inv).filter(v=>v?.status==="LOW_STOCK").length;
+  const mockCount = Object.values(inv).filter(v=>v?.isMock).length;
+  const filtStores = STORES.filter(s=>filterStore==="All"||s.name===filterStore);
+  const filtProds = PRODUCTS.filter(p=>filterCat==="All"||p.category===filterCat);
+  const filtPosts = redditFilter==="all"?posts:redditFilter==="local"?posts.filter(p=>p.isLocal):posts.filter(p=>p.type===redditFilter);
+
+  const btnStyle = (active) => ({background:active?"#FFCC00":"#1e2d47",color:active?"#000":"#94a3b8",border:"none",borderRadius:6,padding:"4px 12px",fontSize:12,fontWeight:600,cursor:"pointer"});
+
+  return <div style={{minHeight:"100vh",background:"#0f1729",color:"#e2e8f0",fontFamily:"'Segoe UI',system-ui,sans-serif"}}>
+    {/* Header */}
+    <div style={{background:"linear-gradient(135deg,#1a0533 0%,#0f1729 50%,#001a3d 100%)",borderBottom:"2px solid #FFCC00",padding:"16px"}}>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:10,marginBottom:12}}>
+        <div style={{display:"flex",alignItems:"center",gap:12}}>
+          <span style={{fontSize:36,filter:"drop-shadow(0 0 10px #FFCC00)"}}>⚡</span>
+          <div>
+            <div style={{fontSize:20,fontWeight:800,color:"#FFCC00"}}>PokéScout London</div>
+            <div style={{fontSize:11,color:"#94a3b8"}}>Live inventory + pricing • London, Ontario</div>
+          </div>
+        </div>
+        <div style={{display:"flex",gap:16,flexWrap:"wrap"}}>
+          {[{l:"Stores",v:STORES.length,c:"#60a5fa"},{l:"In Stock",v:inStockCount,c:"#34d399"},{l:"Low Stock",v:lowCount,c:"#fbbf24"}].map(s=>
+            <div key={s.l} style={{textAlign:"center"}}>
+              <div style={{fontSize:20,fontWeight:800,color:s.c}}>{s.v}</div>
+              <div style={{fontSize:10,color:"#64748b",textTransform:"uppercase"}}>{s.l}</div>
+            </div>
+          )}
+        </div>
+      </div>
+      <div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center"}}>
+        <button onClick={scan} disabled={loading} style={{background:"#FFCC00",color:"#000",border:"none",borderRadius:8,padding:"8px 16px",fontWeight:700,fontSize:14,opacity:loading?0.7:1,display:"flex",alignItems:"center",gap:6}}>
+          {loading?<><Spinner/> Scanning…</>:"⟳ Scan All Stores"}
+        </button>
+        {lastChecked&&<span style={{fontSize:12,color:"#64748b"}}>Last scan: {lastChecked}{mockCount>0&&<span style={{color:"#f59e0b",marginLeft:6}}>⚠ {mockCount} simulated</span>}</span>}
+      </div>
+    </div>
+
+    <div style={{padding:"16px",maxWidth:1400,margin:"0 auto"}}>
+      {/* Alerts */}
+      {alerts.length>0&&<div style={{background:"#1a2e1a",border:"1px solid #34d399",borderRadius:12,padding:"12px 16px",marginBottom:16}}>
+        <div style={{fontWeight:700,color:"#34d399",marginBottom:8,fontSize:13}}>🎉 Restock Alerts</div>
+        {alerts.slice(0,5).map(a=><div key={a.id} style={{display:"flex",gap:8,alignItems:"center",fontSize:13,marginBottom:4}}>
+          <StatusBadge status={a.status}/>
+          <span><strong>{a.product}</strong> at {a.store}</span>
+          {a.price&&<span style={{color:"#34d399",fontWeight:700}}>{fmt(a.price)}</span>}
+          <span style={{color:"#64748b",marginLeft:"auto"}}>{a.time}</span>
+        </div>)}
+      </div>}
+
+      {/* Tabs */}
+      <div style={{display:"flex",borderBottom:"1px solid #2d3f5e",marginBottom:16}}>
+        {[{k:"inventory",l:"🏪 Inventory"},{k:"prices",l:"💰 Prices"},{k:"reddit",l:"🟠 Reddit"}].map(t=>
+          <button key={t.k} onClick={()=>setTab(t.k)} style={{background:"none",border:"none",borderBottom:tab===t.k?"2px solid #FFCC00":"2px solid transparent",padding:"8px 16px",fontWeight:700,fontSize:13,color:tab===t.k?"#FFCC00":"#64748b",cursor:"pointer",marginBottom:-1}}>
+            {t.l}
+          </button>
+        )}
+      </div>
+
+      {/* Inventory */}
+      {tab==="inventory"&&<>
+        <div style={{display:"flex",gap:8,marginBottom:16,flexWrap:"wrap",alignItems:"center"}}>
+          <span style={{fontSize:11,color:"#64748b",textTransform:"uppercase"}}>Cat</span>
+          {cats.map(c=><button key={c} onClick={()=>setFilterCat(c)} style={btnStyle(filterCat===c)}>{c}</button>)}
+          <div style={{width:1,background:"#334155",height:18}}/>
+          <span style={{fontSize:11,color:"#64748b",textTransform:"uppercase"}}>Store</span>
+          {storeNames.map(s=><button key={s} onClick={()=>setFilterStore(s)} style={btnStyle(filterStore===s)}>{s}</button>)}
+        </div>
+
+        {Object.keys(inv).length===0?
+          <div style={{textAlign:"center",padding:"60px 20px"}}>
+            <div style={{fontSize:56,marginBottom:12}}>🎴</div>
+            <div style={{fontSize:18,fontWeight:700,color:"#FFCC00",marginBottom:8}}>Ready to scan London stores</div>
+            <div style={{color:"#64748b",fontSize:13,marginBottom:16}}>Check inventory across {STORES.length} locations</div>
+            <button onClick={scan} style={{background:"#FFCC00",color:"#000",border:"none",borderRadius:8,padding:"10px 24px",fontWeight:700,fontSize:14}}>⟳ Start Scanning</button>
+          </div>:
+          <div style={{display:"grid",gap:12,gridTemplateColumns:"repeat(auto-fill,minmax(320px,1fr))"}}>
+            {filtStores.map(store=>{
+              const sp=filtProds.map(p=>({p,inv:inv[`${store.id}_${p.id}`]}));
+              const inS=sp.filter(x=>x.inv?.status==="IN_STOCK").length;
+              const low=sp.filter(x=>x.inv?.status==="LOW_STOCK").length;
+              return <div key={store.id} style={{background:"#1e2d47",borderRadius:12,border:"1px solid #2d3f5e",overflow:"hidden"}}>
+                <div style={{background:store.color+"22",borderBottom:"1px solid "+store.color+"44",padding:"10px 14px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                  <div style={{display:"flex",alignItems:"center",gap:8}}>
+                    <span style={{fontSize:20}}>{store.logo}</span>
+                    <div>
+                      <div style={{fontWeight:700,fontSize:14,color:"#f1f5f9"}}>{store.name}</div>
+                      <div style={{fontSize:11,color:"#94a3b8"}}>{store.branch} · {store.address}</div>
+                    </div>
+                  </div>
+                  <div style={{textAlign:"right"}}>
+                    {inS>0&&<div style={{fontSize:11,color:"#34d399",fontWeight:600}}>{inS} in stock</div>}
+                    {low>0&&<div style={{fontSize:11,color:"#fbbf24",fontWeight:600}}>{low} low</div>}
+                  </div>
+                </div>
+                <div style={{padding:"4px 0"}}>
+                  {sp.map(({p,inv:i})=>{
+                    const price=i?.price??getPrice(p,store.type);
+                    const isBest=price!=null&&price===getBest(p.id);
+                    return <div key={p.id} style={{display:"grid",gridTemplateColumns:"1fr auto auto",gap:8,alignItems:"center",padding:"6px 14px",borderBottom:"1px solid #243447"}}>
+                      <div>
+                        <div style={{fontSize:12,color:"#e2e8f0",fontWeight:500}}>{p.name}</div>
+                        <div style={{fontSize:10,color:"#64748b"}}>{p.category}</div>
+                      </div>
+                      <span style={{fontSize:12,fontWeight:700,color:isBest?"#34d399":"#cbd5e1",background:isBest?"#0d2a1f":"transparent",borderRadius:4,padding:isBest?"1px 5px":"0",border:isBest?"1px solid #34d39944":"none",whiteSpace:"nowrap"}}>
+                        {fmt(price)}{i?.isMock?<span style={{fontSize:9,color:"#64748b"}}>~</span>:""}
+                      </span>
+                      <div style={{display:"flex",alignItems:"center",gap:4}}>
+                        {i?.isMock&&<span style={{fontSize:9,color:"#64748b",border:"1px solid #334155",borderRadius:3,padding:"1px 3px"}}>SIM</span>}
+                        <StatusBadge status={i?.status??"—"} qty={i?.qty}/>
+                      </div>
+                    </div>;
+                  })}
+                </div>
+              </div>;
+            })}
+          </div>
+        }
+      </>}
+
+      {/* Prices */}
+      {tab==="prices"&&<div>
+        <div style={{marginBottom:12}}>
+          <div style={{fontSize:15,fontWeight:700,color:"#FFCC00",marginBottom:4}}>💰 Price Comparison</div>
+          <div style={{fontSize:12,color:"#64748b"}}>🏆 = lowest price · Scan stores to confirm live pricing</div>
+        </div>
+        <div style={{overflowX:"auto"}}>
+          <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
+            <thead>
+              <tr style={{borderBottom:"1px solid #2d3f5e"}}>
+                <th style={{textAlign:"left",padding:"8px 10px",color:"#94a3b8"}}>Product</th>
+                <th style={{textAlign:"center",padding:"8px 6px",color:"#94a3b8"}}>MSRP</th>
+                {[...new Set(STORES.map(s=>s.type))].map(t=>{
+                  const s=STORES.find(x=>x.type===t);
+                  return <th key={t} style={{textAlign:"center",padding:"8px 6px",color:s.color,whiteSpace:"nowrap"}}>{s.logo} {s.name}</th>;
+                })}
+              </tr>
+            </thead>
+            <tbody>
+              {PRODUCTS.map(p=>{
+                const best=getBest(p.id);
+                return <tr key={p.id} style={{borderBottom:"1px solid #1e2d47"}}>
+                  <td style={{padding:"8px 10px",color:"#e2e8f0",fontWeight:500}}>
+                    <div>{p.name}</div>
+                    <div style={{fontSize:10,color:"#64748b"}}>{p.category}</div>
+                  </td>
+                  <td style={{textAlign:"center",padding:"8px 6px",color:"#94a3b8",fontWeight:600}}>{fmt(p.msrp)}</td>
+                  {[...new Set(STORES.map(s=>s.type))].map(t=>{
+                    const price=getPrice(p,t);
+                    const isBest=price!=null&&price===best;
+                    return <td key={t} style={{textAlign:"center",padding:"8px 6px"}}>
+                      {price==null?<span style={{color:"#475569"}}>N/A</span>:
+                        <div>
+                          <div style={{fontSize:12,fontWeight:700,color:isBest?"#34d399":"#e2e8f0",background:isBest?"#0d2a1f":"transparent",borderRadius:5,padding:isBest?"2px 6px":"0",border:isBest?"1px solid #34d399":"none",display:"inline-block"}}>
+                            {fmt(price)}{isBest?" 🏆":""}
+                          </div>
+                          {price<p.msrp&&<div style={{fontSize:10,color:"#34d399"}}>Save {Math.round((p.msrp-price)/p.msrp*100)}%</div>}
+                        </div>
+                      }
+                    </td>;
+                  })}
+                </tr>;
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>}
+
+      {/* Reddit */}
+      {tab==="reddit"&&<div>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:8,marginBottom:12}}>
+          <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+            {[{k:"all",l:`All (${posts.length})`},{k:"local",l:`📍 London (${posts.filter(p=>p.isLocal).length})`},{k:"restock",l:`🔄 Restocks (${posts.filter(p=>p.type==="restock").length})`}].map(f=>
+              <button key={f.k} onClick={()=>setRedditFilter(f.k)} style={{background:redditFilter===f.k?"#FF4500":"#1e2d47",color:redditFilter===f.k?"#fff":"#94a3b8",border:"none",borderRadius:6,padding:"4px 10px",fontSize:12,fontWeight:600,cursor:"pointer"}}>{f.l}</button>
+            )}
+          </div>
+          <button onClick={fetchPosts} disabled={redditLoading} style={{background:"#FF4500",color:"#fff",border:"none",borderRadius:7,padding:"6px 12px",fontWeight:700,fontSize:12,cursor:"pointer",opacity:redditLoading?0.7:1,display:"flex",alignItems:"center",gap:5}}>
+            {redditLoading?<><Spinner/> Fetching…</>:"⟳ Fetch Reddit"}
+          </button>
+        </div>
+        {redditLoading&&posts.length===0?
+          <div style={{textAlign:"center",padding:40,color:"#64748b"}}><Spinner/> Scanning Reddit…</div>:
+          filtPosts.length===0?
+          <div style={{textAlign:"center",padding:40,color:"#64748b"}}>No posts found. Tap Fetch Reddit.</div>:
+          filtPosts.map(post=><a key={post.id} href={post.url} target="_blank" rel="noopener noreferrer"
+            style={{display:"block",background:post.isLocal?"#1a2535":"#1a2030",border:`1px solid ${post.isLocal?"#3b5bdb":"#2d3f5e"}`,borderRadius:10,padding:"10px 14px",marginBottom:8}}>
+            <div style={{display:"flex",gap:8,justifyContent:"space-between"}}>
+              <div style={{flex:1}}>
+                <div style={{display:"flex",gap:6,marginBottom:4,flexWrap:"wrap",alignItems:"center"}}>
+                  {post.isLocal&&<span style={{background:"#d1fae5",color:"#065f46",borderRadius:4,padding:"2px 6px",fontSize:10,fontWeight:700}}>📍 Local</span>}
+                  {post.type==="restock"&&<span style={{background:"#d1fae5",color:"#065f46",borderRadius:4,padding:"2px 6px",fontSize:10,fontWeight:700}}>🔄 Restock</span>}
+                  <span style={{fontSize:11,color:"#FF4500",fontWeight:600}}>r/{post.subreddit}</span>
+                </div>
+                <div style={{fontSize:13,color:"#e2e8f0",fontWeight:600,lineHeight:1.4}}>{post.title}</div>
+              </div>
+              <div style={{textAlign:"right",minWidth:50}}>
+                <div style={{fontSize:12,color:"#fbbf24",fontWeight:700}}>▲{post.score}</div>
+                <div style={{fontSize:10,color:"#64748b"}}>{timeAgo(post.created_utc)}</div>
+              </div>
+            </div>
+          </a>)
+        }
+      </div>}
+    </div>
+  </div>;
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>
