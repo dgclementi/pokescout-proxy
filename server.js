@@ -4,7 +4,6 @@ import fetch from "node-fetch";
 const app = express();
 const SCRAPER_KEY = process.env.SCRAPER_KEY;
 app.use(cors({ origin: "*" }));
-app.get("/", (_, res) => res.sendFile(process.cwd() + "/index.html"));
 function scraperUrl(url) {
   return `http://api.scraperapi.com?api_key=${SCRAPER_KEY}&url=${encodeURIComponent(url)}&country_code=ca`;
 }
@@ -27,4 +26,5 @@ app.get("/api/walmart/:upc", async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 app.get("/health", (_, res) => res.json({ status: "ok" }));
+app.use(express.static("."));
 app.listen(3001, () => console.log("PokéScout running on http://localhost:3001"));
